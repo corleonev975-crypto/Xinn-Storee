@@ -1,46 +1,53 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import ProductList from '@/components/ProductList';
-import productsData from '@/data/products.json';
-import type { Product } from '@/lib/utils';
+import { useState } from 'react';
+import { lookupTransactionStatus } from '@/lib/transaction';
 
-const products = productsData as Product[];
+export default function CheckPage() {
+  const [transactionId, setTransactionId] = useState('');
+  const [status, setStatus] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
-export default function ProductsPage() {
-  const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<'all' | 'game' | 'voucher'>('all');
-
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      const matchesQuery = product.name.toLowerCase().includes(query.toLowerCase());
-      const matchesCategory = category === 'all' ? true : product.category === category;
-      return matchesQuery && matchesCategory;
-    });
-  }, [query, category]);
+  function handleCheck() {
+    setSubmitted(true);
+    if (!transactionId.trim()) {
+      setStatus(null);
+      return;
+    }
+    setStatus(lookupTransactionStatus(transactionId.trim()));
+  }
 
   return (
     <main className="container-shell py-10">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white">Semua Produk</h1>
-        <p className="mt-2 text-sm text-slate-400">Cari game, voucher, dan produk digital yang ingin kamu top up.</p>
-      </div>
+      <div className="mx-auto max-w-2xl card p-6 sm:p-8">
+        <h1 className="text-3xl font-bold text-white">Cek Transaksi</h1>
+        <p className="mt-2 text-sm text-slate-400">
+          Masukkan ID transaksi untuk melihat status mock transaksi kamu.
+        </p>
 
-      <div className="mb-8 grid gap-4 md:grid-cols-[1fr_auto]">
-        <input
-          className="field"
-          placeholder="Cari produk..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <select className="field md:w-52" value={category} onChange={(e) => setCategory(e.target.value as 'all' | 'game' | 'voucher')}>
-          <option value="all">Semua Kategori</option>
-          <option value="game">Game</option>
-          <option value="voucher">Voucher</option>
-        </select>
-      </div>
+        <div className="mt-6 space-y-4">
+          <input
+            className="field"
+            placeholder="Contoh: XIN-171234567890-AB12CD"
+            value={transactionId}
+            onChange={(e) => setTransactionId(e.target.value)}
+          />
+          <button type="button" onClick={handleCheck} className="btn-primary w-full">
+            Cek Sekarang
+          </button>
 
-      <ProductList products={filteredProducts} />
+          {submitted && !transactionId.trim() ? (
+            <p className="text-sm text-rose-400">ID transaksi wajib diisi.</p>
+          ) : null}
+
+          {status ? (
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 text-sm text-slate-300">
+              <p className="font-medium text-white">Status transaksi</p>
+              <p className="mt-2 uppercase tracking-wide text-brand-300">{status}</p>
+            </div>
+          ) : null}
+        </div>
+      </div>
     </main>
   );
 }
